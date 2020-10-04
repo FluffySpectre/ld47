@@ -9,9 +9,9 @@ public class Ball : MonoBehaviour
  
     private void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.gameObject.tag == "Player")
+        if (other.gameObject.tag == "Bot")
         {
-            bool isKicking = other.transform.GetComponent<Player>().IsKicking;
+            bool isKicking = other.transform.GetComponent<BotController>().IsDashing;
 
             Vector3 direction = (other.transform.position - transform.position).normalized;
             GetComponent<Rigidbody2D>().AddForce(-direction * (isKicking ? kickForce : dribbleForce), ForceMode2D.Impulse);
