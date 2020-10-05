@@ -11,6 +11,8 @@ public class InputCommand
 
 public class BotController : MonoBehaviour
 {
+    public ParticleSystem dust;
+    
     public float runSpeed = 2f;
     public float dashMultiplicator = 5f;
 
@@ -29,18 +31,50 @@ public class BotController : MonoBehaviour
 
     private SpriteRenderer playerSprite;
     private Animator animator;
+    private Rigidbody2D rigid;
 
     // Start is called before the first frame update
     void Awake()
     {
         playerSprite = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
+        rigid = GetComponent<Rigidbody2D>();
     }
 
     void Update()
     {
         ProcessAnimation();
+    }
+
+    void FixedUpdate()
+    {
         ProcessMovement();
+    }
+
+    public IEnumerator MoveToSpawn(Vector3 pos) 
+    {
+        // disable physics
+        GetComponent<Collider2D>().enabled = false;
+        GetComponent<Rigidbody2D>().simulated = false;
+        GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+        
+        float distToSpawn = 1f;
+        float animStep = 0f;
+        while (distToSpawn > 0.1f)
+        {
+            animStep += 2f * Time.deltaTime;
+            transform.position = Vector3.Lerp(transform.position, pos, animStep);
+
+            distToSpawn = Vector3.Distance(pos, transform.position);
+
+            yield return null;
+        }
+
+        transform.position = pos;
+
+        // enable physics again
+        GetComponent<Collider2D>().enabled = true;
+        GetComponent<Rigidbody2D>().simulated = true;
     }
 
     public void ResetBot()
@@ -88,7 +122,8 @@ public class BotController : MonoBehaviour
 
         movement *= Time.deltaTime;
 
-        transform.Translate(movement, Space.World);
+        rigid.MovePosition(transform.position + movement * 50f * Time.fixedDeltaTime);
+
         movementX = 0;
         movementY = 0;
     }
@@ -111,6 +146,12 @@ public class BotController : MonoBehaviour
         else 
         {
             animator.SetBool("Moving", true);
+            CreateDust();
         }
+    }
+
+    void CreateDust()
+    {
+        dust.Play();
     }
 }

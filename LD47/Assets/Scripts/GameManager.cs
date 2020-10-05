@@ -33,7 +33,6 @@ public class GameManager : MonoBehaviour
     public GameObject titleScreen;
 
     private float roundTimer;
-    private Goal[] goals;
 
     private enum GameState
     {
@@ -55,6 +54,8 @@ public class GameManager : MonoBehaviour
     private int botsMax = 0;
     public Transform[] spawnPoints;
 
+    public Goal[] goals;
+
     void Awake()
     {
         if (_instance == null)
@@ -73,8 +74,6 @@ public class GameManager : MonoBehaviour
             // clear the inputs recorded
             inputCommand.Add(i, new List<CommandHistoryEntry>());
         }
-
-        goals = FindObjectsOfType<Goal>();
     }
 
     public void StartGame()
@@ -90,10 +89,10 @@ public class GameManager : MonoBehaviour
     {
         InputCommand c = new InputCommand();
         
-        if (Input.GetKey(KeyCode.W)) c.InputY = 1;
-        else if (Input.GetKey(KeyCode.S)) c.InputY = -1;
-        if (Input.GetKey(KeyCode.A))  c.InputX = -1;
-        else if (Input.GetKey(KeyCode.D))  c.InputX = 1;
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) c.InputY = 1;
+        else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) c.InputY = -1;
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) c.InputX = -1;
+        else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) c.InputX = 1;
 
         if (Input.GetKey(KeyCode.Space)) c.InputDash = true;
 
@@ -165,7 +164,7 @@ public class GameManager : MonoBehaviour
                     {
                         if (bots[i].dashTime <= 0)
                         {
-                            bots[i].dashTime = 1f;
+                            bots[i].dashTime = 0.5f;
                         }
                     }
                     else
@@ -210,6 +209,17 @@ public class GameManager : MonoBehaviour
     void ActivateGoalAtRandom()
     {
         int randomGoal = Random.Range(0, goals.Length);
+
+        // first round, tutorial top
+        if (round == 0) 
+        {   
+            randomGoal = 0;
+        } 
+        else if (round == 1) 
+        {   
+            randomGoal = 1;
+        }
+
         for (int i = 0; i < goals.Length; i++)
         {
             goals[i].gameObject.SetActive(i == randomGoal);
@@ -219,6 +229,9 @@ public class GameManager : MonoBehaviour
     IEnumerator InitRoundRoutine()
     {
         yield return StartCoroutine(ResetBall());
+
+        if (playerId != 255)
+            yield return new WaitForSeconds(1f);
 
         ActivateGoalAtRandom();
 
@@ -268,6 +281,9 @@ public class GameManager : MonoBehaviour
             bots[i].transform.position = spawnPoints[i].position;
         }
 
+        if (round > 1)
+            yield return new WaitForSeconds(1f);
+
         playerControllable = true;
 
         gameState = GameState.RoundRunning;
@@ -285,10 +301,18 @@ public class GameManager : MonoBehaviour
         else
         {
             yield return new WaitForSeconds(1f);
+
+            // move active bots to it's spawnposition
+            for (int i=0; i<bots.Length; i++)
+            {
+                if (bots[i].active)
+                    yield return StartCoroutine(bots[i].MoveToSpawn(spawnPoints[i].position));
+                else
+                    yield return null;
+            }
+
             StartCoroutine(InitRoundRoutine());
         }
-
-        yield return null;
     }
 
     IEnumerator ResetBall(float delay = 0f)
@@ -302,9 +326,11 @@ public class GameManager : MonoBehaviour
 
         float distToSpawn = 1f;
         Vector3 ballSpawn = Vector3.zero;
+        float animStep = 0f;
         while (distToSpawn > 0.01f)
         {
-            ball.position = Vector3.Lerp(ball.position, ballSpawn, resetMovementSpeed * Time.deltaTime);
+            animStep += 2f * Time.deltaTime;
+            ball.position = Vector3.Lerp(ball.position, ballSpawn, animStep);
 
             distToSpawn = Vector3.Distance(ballSpawn, ball.position);
 
@@ -332,7 +358,7 @@ public class GameManager : MonoBehaviour
 
         playerControllable = false;
 
-        yield return StartCoroutine(ResetBall(1f));
+        yield return StartCoroutine(ResetBall(0.5f));
 
         playerControllable = true;
 
