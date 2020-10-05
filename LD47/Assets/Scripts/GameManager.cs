@@ -384,4 +384,9 @@ public class GameManager : MonoBehaviour
         if (gameState == GameState.GameOver)
             finalScoreText.text = "Final score: " + score;
     }
+
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
 }
