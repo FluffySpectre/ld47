@@ -31,6 +31,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI finalScoreText;
     public GameObject gameOverPanel;
     public GameObject titleScreen;
+    public TextMeshProUGUI roundTransitionText;
 
     private float roundTimer;
 
@@ -284,9 +285,22 @@ public class GameManager : MonoBehaviour
         if (round > 1)
             yield return new WaitForSeconds(1f);
 
+        // show round end text
+        roundTransitionText.gameObject.SetActive(true);
+        roundTransitionText.text = "GET READY";
+        roundTransitionText.GetComponent<Animator>().Play("round_over");
+
+        yield return new WaitForSeconds(2f);
+
         playerControllable = true;
 
         gameState = GameState.RoundRunning;
+
+        roundTransitionText.text = "GO!";
+
+        yield return new WaitForSeconds(1f);
+
+        roundTransitionText.gameObject.SetActive(false);
     }
 
     IEnumerator EndRoundRoutine()
@@ -300,6 +314,11 @@ public class GameManager : MonoBehaviour
         }
         else
         {
+            // show round end text
+            roundTransitionText.gameObject.SetActive(true);
+            roundTransitionText.text = "ROUND OVER";
+            roundTransitionText.GetComponent<Animator>().Play("round_over");
+
             yield return new WaitForSeconds(1f);
 
             // move active bots to it's spawnposition
@@ -346,7 +365,8 @@ public class GameManager : MonoBehaviour
 
     public void GoalScored()
     {
-        StartCoroutine(GoalScoredRoutine());
+        if (gameState == GameState.RoundRunning)
+            StartCoroutine(GoalScoredRoutine());
     }
 
     IEnumerator GoalScoredRoutine()
@@ -360,9 +380,11 @@ public class GameManager : MonoBehaviour
 
         yield return StartCoroutine(ResetBall(0.5f));
 
-        playerControllable = true;
+        if (gameState == GameState.GoalScored) {
+            playerControllable = true;
 
-        gameState = GameState.RoundRunning;
+            gameState = GameState.RoundRunning;
+        }
     }
 
     bool IsGameOver()
@@ -377,7 +399,7 @@ public class GameManager : MonoBehaviour
 
     public void RestartGame()
     {
-        gameState = GameState.RoundRunning;
+        gameState = GameState.RoundEnded;
         roundTimer = roundDuration;
         score = 0;
         round = 0;
@@ -404,11 +426,11 @@ public class GameManager : MonoBehaviour
     {
         scoreText.text = "SCORE: " + score + " / " + scoreLimit;
         roundText.text = "ROUND: " + round;
-        countdownText.text = "" + Mathf.Round(roundTimer);
+        countdownText.text = System.Math.Round(roundTimer, 2).ToString("0.0");
 
         gameOverPanel.SetActive(gameState == GameState.GameOver);
         if (gameState == GameState.GameOver)
-            finalScoreText.text = "Final score: " + score;
+            finalScoreText.text = "YOUR SCORE: " + score;
     }
 
     public void QuitGame()
