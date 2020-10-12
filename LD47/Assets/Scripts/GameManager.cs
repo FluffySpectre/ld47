@@ -308,6 +308,9 @@ public class GameManager : MonoBehaviour
         gameState = GameState.RoundEnded;
         playerControllable = false;
 
+        ball.GetComponent<Rigidbody2D>().simulated = false;
+        ball.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+
         if (IsGameOver())
         {
             GameOver();
