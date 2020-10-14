@@ -57,6 +57,7 @@ public class BotController : MonoBehaviour
         GetComponent<Collider2D>().enabled = false;
         GetComponent<Rigidbody2D>().simulated = false;
         GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+        playerSprite.flipX = false;
         
         float distToSpawn = 1f;
         float animStep = 0f;
