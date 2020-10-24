@@ -83,7 +83,8 @@ public class BotController : MonoBehaviour
         active = false;
 
         ChangeAppearanceToBot();
-
+        playerSprite.flipX = false;
+        
         // hide offscreen
         transform.position = new Vector3(0, 1000);
 
